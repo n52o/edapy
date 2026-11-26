@@ -15,4 +15,4 @@
 ## Installation
 
 ```bash
-pip install edapy
+pip install edapy-tools
