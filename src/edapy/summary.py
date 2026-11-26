@@ -33,9 +33,14 @@ def summary(
 
   if save_path:
     out.to_csv(save_path, index=False)
-    print(f"Summary CSV saved to: {save_path}")
+    print(f"\nSummary CSV saved to: {save_path}")
 
   if show:
-    print(out.to_string(index=False))
+    max_len = int(out["Column"].astype(str).str.len().max())
+    fmt = {"Column": lambda x: f"{str(x):<{max_len}}  "}
+    print()
+    print(
+        out.to_string(index=False, justify="left", col_space=3, formatters=fmt)
+    )
 
   return out
