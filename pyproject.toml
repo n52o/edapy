@@ -1,0 +1,13 @@
+[project]
+name = "edapy"
+version = "0.1.0"
+description = "Fast, lightweight, and intuitive Exploratory Data Analysis (EDA) toolkit for pandas."
+readme = "README.md"
+requires-python = ">=3.7"
+license = { text = "MIT" }
+authors = [
+    { name = "Abdulaziz Mohamed" }
+]
+dependencies = [
+    "pandas>=1.3.0",
+]
