@@ -1,6 +1,6 @@
 [project]
 name = "edapy-tools"
-version = "0.1.2"
+version = "0.2.0"
 description = "Fast, lightweight, and intuitive Exploratory Data Analysis (EDA) toolkit for pandas."
 readme = "README.md"
 requires-python = ">=3.7"
