@@ -1,11 +1,77 @@
 from __future__ import annotations
+from pathlib import Path
+from typing import Union
+import numpy as np
 import pandas as pd
+
+_MISSING_TOKENS = {
+    "",
+    "na",
+    "n/a",
+    "nan",
+    "null",
+    "none",
+    "nil",
+    "-",
+    "--",
+    "?",
+    "unknown",
+}
+
+
+def _read_any_file(file_path: Union[str, Path, pd.DataFrame]) -> pd.DataFrame:
+  if isinstance(file_path, pd.DataFrame):
+    return file_path.copy()
+
+  path = Path(file_path)
+  if not path.exists():
+    raise FileNotFoundError(f"File not found: {path}")
+
+  suffix = path.suffix.lower()
+
+  if suffix in {".xlsx", ".xls"}:
+    try:
+      return pd.read_excel(path)
+    except ImportError as exc:
+      raise ImportError(
+          "Reading Excel files requires 'openpyxl'. Install it via: pip install"
+          " openpyxl"
+      ) from exc
+
+  if suffix == ".json":
+    return pd.read_json(path)
+
+  last_err = None
+  for enc in ("utf-8", "utf-8-sig", "cp1256", "latin1"):
+    try:
+      df = pd.read_csv(path, encoding=enc)
+      if df.shape[1] == 1:
+        df_auto = pd.read_csv(path, encoding=enc, sep=None, engine="python")
+        if df_auto.shape[1] > 1:
+          return df_auto
+      return df
+    except Exception as err:
+      last_err = err
+
+  raise ValueError(f"Could not decode or parse '{path}': {last_err}")
 
 
 def load(
-    file_path: str, preview: bool = False, head_rows: int = 5
+    file_path: Union[str, Path, pd.DataFrame],
+    preview: bool = False,
+    head_rows: int = 5,
 ) -> pd.DataFrame:
-  df = pd.read_csv(file_path)
+  df = _read_any_file(file_path)
+
+  # Clean column names
+  df.columns = [str(c).strip() for c in df.columns]
+
+  # Normalize hidden missing tokens in text columns
+  for col in df.select_dtypes(include=["object", "string"]).columns:
+    stripped = df[col].astype(str).str.strip()
+    mask = stripped.str.lower().isin(_MISSING_TOKENS) & df[col].notna()
+    if mask.any():
+      df.loc[mask, col] = np.nan
 
   dups = int(df.duplicated().sum())
   if dups > 0:
